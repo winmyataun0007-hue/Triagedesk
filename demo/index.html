@@ -594,7 +594,7 @@ function openAbout(){
   tickClock();setInterval(tickClock,1000);
   try{await TD.ready;}catch(e){return;}
   await loadActors();refresh();setInterval(refresh,5000);
-  const tour=$('#tour');tour.hidden=false;if(window.innerWidth<700)tour.classList.add('min');
+  const tour=$('#tour');tour.hidden=false;if(window.innerWidth<1100)tour.classList.add('min');
 })();
 </script>
 </body>
