@@ -1,0 +1,22 @@
+# Internal asset inventory. Enrichment uses this to add business context to an
+# alert: an alert against the payroll database matters more than one against a
+# test box. In a real deployment this would sync from a CMDB.
+
+assets:
+  "10.0.10.5":   {name: "PAYROLL-DB",     type: "database",   criticality: "crown_jewel", owner: "Finance"}
+  "10.0.10.6":   {name: "HR-APP",         type: "server",     criticality: "high",        owner: "HR"}
+  "10.0.10.20":  {name: "DC01",           type: "domain_controller", criticality: "crown_jewel", owner: "IT"}
+  "10.0.20.10":  {name: "WEB-PROD-01",    type: "web_server", criticality: "high",        owner: "IT"}
+  "10.0.20.11":  {name: "WEB-PROD-02",    type: "web_server", criticality: "high",        owner: "IT"}
+  "10.0.30.15":  {name: "FILE-SRV",       type: "file_server",criticality: "high",        owner: "IT"}
+  "10.0.40.100": {name: "WKS-FINANCE-07", type: "workstation",criticality: "medium",      owner: "Finance"}
+  "10.0.40.101": {name: "WKS-DEV-12",     type: "workstation",criticality: "low",         owner: "Engineering"}
+  "10.0.40.102": {name: "WKS-CEO",        type: "workstation",criticality: "crown_jewel", owner: "Executive"}
+  "10.0.50.5":   {name: "TEST-BOX",       type: "workstation",criticality: "low",         owner: "IT"}
+
+# Severity is bumped when the destination is a crown-jewel asset.
+criticality_boost:
+  crown_jewel: 2      # raise severity by 2 levels
+  high: 1
+  medium: 0
+  low: -1             # a noisy alert on a throwaway test box is lower priority

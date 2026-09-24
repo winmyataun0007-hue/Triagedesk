@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TriageDesk SOC Console</title>
+<style>
+  :root{
+    --bg:#0c1016;--panel:#151c26;--panel2:#1c2733;--line:#26303d;--txt:#e7edf4;--muted:#8a9aad;
+    --accent:#4c8dff;--info:#5f7d97;--low:#3fb27f;--medium:#e0b64a;--high:#e8863c;--critical:#e5484d;
+    --ok:#3fb27f;--risk:#e0b64a;--breach:#e5484d;--met:#5f7d97;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;align-items:center;gap:14px;padding:11px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  header h1{font-size:16px;margin:0;letter-spacing:.3px}
+  header h1 .m{color:var(--accent)}
+  .spacer{flex:1}
+  select,button{font:inherit}
+  .sel{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+  .btn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:#123; border-color:var(--accent);color:#bcd8ff}
+  .wrap{padding:18px;max-width:1600px;margin:0 auto;display:grid;grid-template-columns:2.2fr 1fr;gap:16px}
+  .col-span{grid-column:1 / -1}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px}
+  .panel h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 12px}
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px}
+  .kpi .n{font-size:24px;font-weight:600}
+  .kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  .kpi.alarm .n{color:var(--critical)} .kpi.warn .n{color:var(--medium)} .kpi.good .n{color:var(--ok)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr.clk{cursor:pointer} tr.clk:hover{background:var(--panel2)}
+  .pri{font-weight:700;font-size:11px;padding:2px 7px;border-radius:4px;background:var(--panel2);border:1px solid var(--line)}
+  .pri.P1{color:var(--critical);border-color:var(--critical)} .pri.P2{color:var(--high);border-color:var(--high)}
+  .pri.P3{color:var(--medium)} .pri.P4{color:var(--muted)}
+  .sev{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block;min-width:58px;text-align:center}
+  .sev.info{background:rgba(95,125,151,.2);color:var(--info)} .sev.low{background:rgba(63,178,127,.2);color:var(--low)}
+  .sev.medium{background:rgba(224,182,74,.2);color:var(--medium)} .sev.high{background:rgba(232,134,60,.2);color:var(--high)}
+  .sev.critical{background:rgba(229,72,77,.25);color:var(--critical)}
+  .chip{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+  .chip.on_track{color:var(--ok);border-color:var(--ok)} .chip.at_risk{color:var(--risk);border-color:var(--risk)}
+  .chip.breached{color:#fff;background:var(--breach);border-color:var(--breach)} .chip.met{color:var(--met)}
+  .tag{font-size:10px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted);margin-right:3px;white-space:nowrap}
+  .esc{font-size:10px;font-weight:700;color:#fff;background:var(--breach);padding:1px 6px;border-radius:4px}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .muted{color:var(--muted)} .risknum{font-weight:700}
+  .filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+  .bar{height:8px;background:#0c141c;border-radius:4px;overflow:hidden;margin-top:4px}
+  .bar>span{display:block;height:100%;background:var(--accent)}
+  .gauge-row{display:flex;justify-content:space-between;font-size:13px;margin:8px 0 2px}
+  .heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+  .cell{padding:7px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);font-size:11px}
+  .cell.hit{background:rgba(76,141,255,.16);border-color:var(--accent)} .cell.miss{opacity:.45}
+  .cell .tid{font-weight:600;font-family:ui-monospace,monospace} .cell .cnt{float:right;color:var(--accent)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:flex-start;justify-content:center;z-index:60;padding:24px;overflow:auto}
+  .modal.show{display:flex}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:840px;width:100%;padding:22px}
+  .close{float:right;cursor:pointer;color:var(--muted);font-size:24px;line-height:1}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;padding:12px;background:var(--panel2);border-radius:8px}
+  .pb{counter-reset:s;list-style:none;padding:0;margin:8px 0}
+  .pb li{padding:7px 7px 7px 38px;position:relative;border-bottom:1px solid var(--line)}
+  .pb li:before{counter-increment:s;content:counter(s);position:absolute;left:6px;top:7px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#001;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .note{background:rgba(76,141,255,.08);border-left:3px solid var(--accent);padding:6px 10px;margin:4px 0;font-size:12px;border-radius:0 4px 4px 0}
+  .tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px}
+  .tl .ev{position:relative;margin-bottom:8px;font-size:12px}
+  .tl .ev:before{content:"";position:absolute;left:-19px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .foot{color:var(--muted);font-size:11px;text-align:center;padding:16px}
+  input.cmt{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--txt);padding:8px;margin-top:6px}
+  @media(max-width:1000px){.wrap{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="m">▚ TriageDesk</span> · SOC Console</h1>
+  <span class="chip" id="clock"></span>
+  <div class="spacer"></div>
+  <span class="muted" style="font-size:12px">Acting as</span>
+  <select class="sel" id="actor"></select>
+  <button class="btn primary" onclick="simulate()">⚡ Simulate alerts</button>
+</header>
+
+<div class="wrap">
+  <!-- KPIs -->
+  <div class="panel col-span">
+    <div class="kpis">
+      <div class="kpi"><div class="n" id="kOpen">–</div><div class="l">Open incidents</div></div>
+      <div class="kpi alarm"><div class="n" id="kEsc">–</div><div class="l">Escalated</div></div>
+      <div class="kpi warn"><div class="n" id="kBreach">–</div><div class="l">SLA breached (open)</div></div>
+      <div class="kpi"><div class="n" id="kMtta">–</div><div class="l">MTTA</div></div>
+      <div class="kpi"><div class="n" id="kMttr">–</div><div class="l">MTTR</div></div>
+      <div class="kpi good"><div class="n" id="kSla">–</div><div class="l">Ack SLA met</div></div>
+    </div>
+  </div>
+
+  <!-- Queue -->
+  <div class="panel">
+    <h2>Incident Queue</h2>
+    <div class="filters">
+      <select class="sel" id="fStatus" onchange="loadQueue()">
+        <option value="">All statuses</option><option value="new">New</option>
+        <option value="acknowledged">Acknowledged</option><option value="investigating">Investigating</option>
+        <option value="resolved">Resolved</option>
+      </select>
+      <label class="muted" style="font-size:12px"><input type="checkbox" id="fMine" onchange="loadQueue()"> Assigned to me</label>
+      <span class="muted" id="qCount" style="font-size:12px"></span>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Pri</th><th>Risk</th><th>Incident</th><th>Severity</th><th>Ack SLA</th><th>Assignee</th><th>Status</th></tr></thead>
+      <tbody id="qBody"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>SLA Compliance</h2>
+      <div class="gauge-row"><span>Acknowledgement</span><span id="gAckPct" class="mono">–</span></div>
+      <div class="bar"><span id="gAck" style="width:0"></span></div>
+      <div class="gauge-row"><span>Resolution</span><span id="gResPct" class="mono">–</span></div>
+      <div class="bar"><span id="gRes" style="width:0;background:var(--ok)"></span></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Severity Mix</h2>
+      <div id="sevMix"></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>Analyst Workload (open)</h2>
+      <table><tbody id="wl"></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>ATT&CK Coverage</h2>
+      <div class="heat" id="heat"></div>
+    </div>
+  </div>
+
+  <!-- Alert stream -->
+  <div class="panel col-span">
+    <h2>Live Alert Stream</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Time</th><th>Source</th><th>Alert</th><th>Src IP</th><th>Target</th><th>Risk</th><th>Severity</th></tr></thead>
+      <tbody id="aBody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+<div class="foot">TriageDesk — SOC Alert Triage &amp; Incident Management · capstone build</div>
+
+<div class="modal" id="modal"><div class="box" id="mBox"></div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const api=(p,m='GET',b)=>fetch(p,{method:m,headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+let ACTOR='zane';
+const esc=s=>(s||'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDur=s=>{if(s==null)return'—';s=Math.abs(Math.round(s));if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m';return Math.floor(s/86400)+'d '+Math.floor(s%86400/3600)+'h';};
+const slaChip=(st,rem)=>{const lbl=st==='met'?'met':st==='breached'?('breached '+fmtDur(rem)+' ago'):st==='at_risk'?(fmtDur(rem)+' left'):(fmtDur(rem)+' left');return `<span class="chip ${st}">${lbl}</span>`;};
+
+async function loadActors(){
+  const a=await api('/api/analysts');
+  $('#actor').innerHTML=a.map(x=>`<option value="${x.username}">${esc(x.display_name)} (${x.role})</option>`).join('');
+  $('#actor').value='zane';
+  $('#actor').onchange=e=>{ACTOR=e.target.value;loadQueue();};
+}
+
+async function loadMetrics(){
+  const m=await api('/api/metrics');
+  $('#kOpen').textContent=m.open_incidents;
+  $('#kEsc').textContent=m.escalated;
+  $('#kBreach').textContent=m.open_breached;
+  $('#kMtta').textContent=fmtDur(m.mtta_seconds);
+  $('#kMttr').textContent=fmtDur(m.mttr_seconds);
+  $('#kSla').textContent=m.ack_compliance_pct!=null?Math.round(m.ack_compliance_pct)+'%':'—';
+  $('#gAckPct').textContent=m.ack_compliance_pct!=null?Math.round(m.ack_compliance_pct)+'%':'—';
+  $('#gResPct').textContent=m.resolve_compliance_pct!=null?Math.round(m.resolve_compliance_pct)+'%':'—';
+  $('#gAck').style.width=(m.ack_compliance_pct||0)+'%';
+  $('#gAck').style.background=(m.ack_compliance_pct||0)>=90?'var(--ok)':(m.ack_compliance_pct||0)>=75?'var(--risk)':'var(--breach)';
+  $('#gRes').style.width=(m.resolve_compliance_pct||0)+'%';
+  const sev=m.by_severity,tot=Object.values(sev).reduce((a,b)=>a+b,0)||1;
+  $('#sevMix').innerHTML=['critical','high','medium','low','info'].map(s=>
+    `<div class="gauge-row"><span><span class="sev ${s}">${s}</span></span><span class="mono">${sev[s]||0}</span></div>
+     <div class="bar"><span style="width:${(sev[s]||0)/tot*100}%;background:var(--${s})"></span></div>`).join('');
+}
+
+async function loadQueue(){
+  const st=$('#fStatus').value, mine=$('#fMine').checked;
+  let url='/api/incidents'+(st?`?status=${st}`:'');
+  if(mine) url+=(st?'&':'?')+'assignee='+ACTOR;
+  const inc=await api(url);
+  $('#qCount').textContent=inc.length+' shown';
+  $('#qBody').innerHTML=inc.length?inc.map(i=>`
+    <tr class="clk" onclick="openInc('${i.incident_id}')">
+      <td><span class="pri ${i.priority}">${i.priority}</span></td>
+      <td class="risknum" style="color:${riskColor(i.risk_score)}">${i.risk_score}</td>
+      <td>${i.escalated?'<span class="esc">ESC</span> ':''}${esc(i.title).slice(0,64)}
+        <div class="muted" style="font-size:11px">${i.techniques.map(t=>`<span class="tag">${t}</span>`).join('')}</div></td>
+      <td><span class="sev ${i.severity}">${i.severity}</span></td>
+      <td>${i.status==='resolved'?'<span class="chip met">closed</span>':slaChip(i.sla.ack_status,i.sla.ack_remaining)}</td>
+      <td class="mono">${esc(i.assignee)||'<span class="muted">—</span>'}</td>
+      <td><span class="muted">${i.status}</span></td>
+    </tr>`).join(''):'<tr><td colspan="7" class="muted">No incidents.</td></tr>';
+}
+
+async function loadAlerts(){
+  const a=await api('/api/alerts?limit=40');
+  $('#aBody').innerHTML=a.map(x=>{
+    const ti=x.enrichment&&x.enrichment.threat_intel;
+    const asset=x.enrichment&&x.enrichment.target_asset;
+    return `<tr><td class="mono muted">${new Date(x.ts*1000).toLocaleTimeString()}</td>
+      <td><span class="tag">${x.source}</span></td>
+      <td>${esc(x.title).slice(0,56)}${ti?' <span class="tag" style="color:#e5484d;border-color:#e5484d">IOC</span>':''}</td>
+      <td class="mono">${esc(x.src_ip)||'—'}</td>
+      <td class="mono">${asset?esc(asset.name):esc(x.dst_ip)||'—'}</td>
+      <td class="risknum" style="color:${riskColor(x.risk_score)}">${x.risk_score}</td>
+      <td><span class="sev ${x.severity}">${x.severity}</span></td></tr>`;
+  }).join('');
+}
+
+async function loadWorkload(){
+  const w=await api('/api/workload');
+  $('#wl').innerHTML=w.map(x=>`<tr><td>${esc(x.display_name)}</td>
+    <td style="text-align:right"><span class="risknum">${x.open}</span> <span class="muted">/ ${x.total}</span></td></tr>`).join('');
+}
+
+async function loadHeat(){
+  const c=await api('/api/coverage');
+  $('#heat').innerHTML=Object.entries(c).map(([t,m])=>`
+    <div class="cell ${m.detected?'hit':'miss'}"><span class="tid">${t}</span>${m.count?`<span class="cnt">${m.count}</span>`:''}
+    <div class="muted" style="margin-top:3px;font-size:10px">${esc(m.name)}</div></div>`).join('');
+}
+
+async function openInc(id){
+  const i=await api('/api/incident/'+id);
+  const notes=(i.alerts||[]).flatMap(a=>(a.enrichment&&a.enrichment.notes)||[]);
+  const uniqNotes=[...new Set(notes)];
+  $('#mBox').innerHTML=`
+    <span class="close" onclick="closeM()">&times;</span>
+    <div><span class="pri ${i.priority}">${i.priority}</span> ${i.escalated?'<span class="esc">ESCALATED</span>':''}
+      <span class="sev ${i.severity}">${i.severity}</span>
+      <span class="risknum" style="color:${riskColor(i.risk_score)}">risk ${i.risk_score}</span></div>
+    <h2 style="font-size:18px;color:var(--txt);margin:8px 0 2px">${esc(i.title)}</h2>
+    <div class="muted mono" style="font-size:12px">${i.incident_id} · ${esc(i.src_ip)||'internal'} · ${i.alert_count} alert(s) · assignee ${esc(i.assignee)||'—'}</div>
+    <p style="font-size:13px">${esc(i.summary)}</p>
+    <div class="muted" style="font-size:12px">
+      Ack SLA: ${slaChip(i.sla.ack_status,i.sla.ack_remaining)} &nbsp; Resolve SLA: ${slaChip(i.sla.resolve_status,i.sla.resolve_remaining)}
+      &nbsp; Verdict: <b>${i.verdict}</b></div>
+
+    <div class="actions">
+      <button class="btn" onclick="act('${id}','acknowledge')">Acknowledge</button>
+      <button class="btn" onclick="act('${id}','status/investigating')">Investigating</button>
+      <button class="btn" onclick="assignMe('${id}')">Assign to me</button>
+      <button class="btn" style="border-color:var(--high)" onclick="act('${id}','verdict/true_positive')">Resolve · True Positive</button>
+      <button class="btn" style="border-color:var(--low)" onclick="act('${id}','verdict/false_positive')">Resolve · False Positive</button>
+      <button class="btn" onclick="act('${id}','verdict/benign')">Resolve · Benign</button>
+    </div>
+
+    ${uniqNotes.length?`<h2 style="font-size:11px;text-transform:uppercase;color:var(--muted)">Enrichment</h2>
+      ${uniqNotes.map(n=>`<div class="note">${esc(n)}</div>`).join('')}`:''}
+
+    <h2 style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-top:14px">Response Playbook — ${i.techniques.map(t=>t+' '+esc(i.technique_names[t]||'')).join(', ')||'general'}</h2>
+    <ol class="pb">${i.playbook.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+
+    <h2 style="font-size:11px;text-transform:uppercase;color:var(--muted)">Alerts (${i.alerts.length})</h2>
+    <div style="overflow-x:auto"><table><thead><tr><th>Time</th><th>Source</th><th>Title</th><th>Sev</th></tr></thead>
+      <tbody>${i.alerts.map(a=>`<tr><td class="mono muted">${new Date(a.ts*1000).toLocaleTimeString()}</td>
+        <td><span class="tag">${a.source}</span></td><td>${esc(a.title)}</td>
+        <td><span class="sev ${a.severity}">${a.severity}</span></td></tr>`).join('')}</tbody></table></div>
+
+    <h2 style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-top:14px">Case Notes & Timeline</h2>
+    <div class="tl">${(i.audit||[]).map(e=>`<div class="ev"><span class="muted mono">${new Date(e.ts*1000).toLocaleString()}</span> — <b>${esc(e.actor)}</b> ${esc(e.action)} ${esc(e.detail||'')}</div>`).join('')}
+      ${(i.comments||[]).map(c=>`<div class="ev"><span class="muted mono">${new Date(c.ts*1000).toLocaleString()}</span> — <b>${esc(c.author)}</b>: ${esc(c.text)}</div>`).join('')}</div>
+    <input class="cmt" id="cmt" placeholder="Add a case note and press Enter…" onkeydown="if(event.key==='Enter')addComment('${id}')">
+  `;
+  $('#modal').classList.add('show');
+}
+function closeM(){$('#modal').classList.remove('show');}
+async function act(id,path){await api(`/api/incident/${id}/${path}?actor=${ACTOR}`,'POST');await openInc(id);refresh();}
+async function assignMe(id){await api(`/api/incident/${id}/assign?actor=${ACTOR}&assignee=${ACTOR}`,'POST');await openInc(id);refresh();}
+async function addComment(id){const el=$('#cmt');if(!el.value.trim())return;await api(`/api/incident/${id}/comment?actor=${ACTOR}`,'POST',{text:el.value});await openInc(id);}
+async function simulate(){await api('/api/simulate?n=5','POST');refresh();}
+function riskColor(r){return r>=90?'#e5484d':r>=70?'#e8863c':r>=50?'#e0b64a':'#3fb27f';}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM();});
+
+function refresh(){loadMetrics();loadQueue();loadAlerts();loadWorkload();loadHeat();}
+function tickClock(){$('#clock').textContent=new Date().toLocaleTimeString();}
+(async()=>{await loadActors();refresh();tickClock();setInterval(tickClock,1000);setInterval(refresh,5000);})();
+</script>
+</body>
+</html>

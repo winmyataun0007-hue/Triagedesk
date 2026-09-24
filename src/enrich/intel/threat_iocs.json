@@ -1,0 +1,21 @@
+{
+  "_comment": "Bundled offline threat-intelligence feed so enrichment works with no network and no API key. In production this would be replaced or supplemented by live feeds (AbuseIPDB, OTX, MISP). Indicators here are illustrative and used by the demo generator.",
+  "ips": {
+    "45.146.164.110": {"category": "c2", "confidence": 95, "actor": "Emotet infrastructure", "feed": "bundled"},
+    "185.220.101.45": {"category": "tor_exit", "confidence": 70, "actor": "Tor exit node", "feed": "bundled"},
+    "193.106.191.22": {"category": "scanner", "confidence": 80, "actor": "Mass scanner", "feed": "bundled"},
+    "91.240.118.172": {"category": "brute_force", "confidence": 88, "actor": "SSH brute-force source", "feed": "bundled"},
+    "146.70.199.30":  {"category": "malware_hosting", "confidence": 90, "actor": "Payload host", "feed": "bundled"},
+    "62.204.41.15":   {"category": "phishing", "confidence": 85, "actor": "Phishing kit host", "feed": "bundled"},
+    "5.188.206.18":   {"category": "exfil", "confidence": 82, "actor": "Data exfil endpoint", "feed": "bundled"}
+  },
+  "domains": {
+    "update-security-microsoft.com": {"category": "phishing", "confidence": 92},
+    "cdn-analytics-tracker.net": {"category": "c2", "confidence": 88},
+    "secure-login-verify.info": {"category": "phishing", "confidence": 90}
+  },
+  "hashes": {
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {"malware": "Cobalt Strike beacon", "confidence": 96},
+    "44d88612fea8a8f36de82e1278abb02f": {"malware": "EICAR test / generic dropper", "confidence": 99}
+  }
+}

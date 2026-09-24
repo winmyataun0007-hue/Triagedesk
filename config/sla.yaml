@@ -1,0 +1,19 @@
+# Service Level Agreement policy per severity.
+#
+# Two clocks run on every incident:
+#   ack_minutes     - time allowed to ACKNOWLEDGE (an analyst has picked it up)
+#   resolve_minutes - time allowed to RESOLVE (closed with a verdict)
+#
+# "at risk" is when the remaining time drops below the warning fraction of the
+# window; "breached" is when the clock passes the due time without the milestone.
+# Breaching the acknowledgement clock triggers escalation.
+
+policies:
+  critical: {ack_minutes: 15,  resolve_minutes: 240,  priority: "P1"}
+  high:     {ack_minutes: 30,  resolve_minutes: 480,  priority: "P2"}
+  medium:   {ack_minutes: 120, resolve_minutes: 1440, priority: "P3"}
+  low:      {ack_minutes: 480, resolve_minutes: 4320, priority: "P4"}
+  info:     {ack_minutes: 1440, resolve_minutes: 10080, priority: "P4"}
+
+warning_fraction: 0.25    # remaining < 25% of window => "at risk"
+escalate_on_ack_breach: true

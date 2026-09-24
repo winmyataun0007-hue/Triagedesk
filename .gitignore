@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Runtime / local
+run_log.txt
+*.log
+*.sqlite
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

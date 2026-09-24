@@ -1,0 +1,6 @@
+# TriageDesk dependencies — deliberately minimal, runs on a student laptop.
+pyyaml>=6.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pytest>=8.0
+# Optional: enable live enrichment (ip-api.com) with TD_ONLINE=1 — no key needed.
