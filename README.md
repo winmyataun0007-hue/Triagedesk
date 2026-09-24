@@ -5,10 +5,17 @@
 ![Tests](https://img.shields.io/badge/tests-24_passing-3FB950)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-mapped-E5484D)
 ![License](https://img.shields.io/badge/license-MIT-1F6FEB)
+[![Live demo](https://img.shields.io/badge/%E2%96%B6_live_demo-try_it_in_your_browser-3FB950)](https://winmyataun0007-hue.github.io/Triagedesk/demo/)
 
 A lightweight **Security Operations Center (SOC) platform** that turns thousands of raw
 security alerts into a handful of **enriched, risk-ranked incidents** an analyst can
 actually work — with **SLA tracking**, **MITRE ATT&CK** mapping, and response playbooks.
+
+### ▶ [Try the live demo](https://winmyataun0007-hue.github.io/Triagedesk/demo/)
+
+No install and no sign-up. The real Python backend runs inside your browser, so you can open an
+incident, acknowledge it, resolve it with a verdict and simulate new alerts. The first load
+takes about 5–10 seconds while Python downloads.
 
 > Built as my Information Technology capstone. It automates the day-to-day workflow of a
 > Tier-1/2 SOC analyst: collect alerts → add context → score → group → track → respond.
@@ -86,6 +93,14 @@ python -m uvicorn web.app:app --port 8000
 ```
 Then open **http://127.0.0.1:8000**. Run the tests with `python -m pytest tests/ -q`.
 
+### How the live demo works
+
+[`demo/`](demo/) is served by GitHub Pages. It loads [Pyodide](https://pyodide.org) (CPython
+compiled to WebAssembly), fetches this repo's `src/`, `config/` and `web/app.py`, and runs them
+**unchanged** in the browser tab. [`demo/bridge.py`](demo/bridge.py) stands in for FastAPI's
+routing, so the dashboard's API calls go straight to the real route handlers. SQLite runs in
+memory, and nothing leaves the tab.
+
 ## Tech stack
 
 **Python · FastAPI · SQLite · vanilla-JS single-file dashboard · pytest.**
@@ -101,6 +116,7 @@ src/enrich/  enrichment engine + bundled threat-intel feed
 src/triage/  risk scoring, correlation, SLA engine, workflow
 src/engine.py  pipeline orchestrator
 web/         FastAPI backend + dashboard.html
+demo/        live in-browser demo (Pyodide) served by GitHub Pages
 tests/       24 unit + integration tests
 docs/        project report, screenshots
 ```
